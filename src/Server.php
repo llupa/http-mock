@@ -1,12 +1,12 @@
 <?php
 namespace InterNations\Component\HttpMock;
 
-use Guzzle\Http\Client;
-use Guzzle\Common\Event;
+use GuzzleHttp\Client;
+use GuzzleHttp\Event\ErrorEvent;
 use hmmmath\Fibonacci\FibonacciFactory;
 use Symfony\Component\Process\Process;
 use RuntimeException;
-use Guzzle\Http\Exception\CurlException;
+use GuzzleHttp\Exception\TransferException;
 
 class Server extends Process
 {
@@ -53,11 +53,13 @@ class Server extends Process
 
     private function createClient()
     {
-        $client = new Client($this->getBaseUrl());
-        $client->getEventDispatcher()->addListener(
-            'request.error',
-            static function (Event $event) {
-                $event->stopPropagation();
+        $client = new Client([
+            'base_url' => $this->getBaseUrl()
+        ]);
+        $client->getEmitter()->on(
+            'error',
+            static function (ErrorEvent $errorEvent) {
+                $errorEvent->stopPropagation();
             }
         );
 
@@ -84,13 +86,12 @@ class Server extends Process
         foreach ($expectations as $expectation) {
             $response = $this->getClient()->post(
                 '/_expectation',
-                null,
                 [
                     'matcher'  => serialize($expectation->getMatcherClosures()),
                     'limiter'  => serialize($expectation->getLimiter()),
                     'response' => serialize($expectation->getResponse()),
                 ]
-            )->send();
+            );
 
             if ($response->getStatusCode() !== 201) {
                 throw new RuntimeException('Could not set up expectations');
@@ -104,7 +105,7 @@ class Server extends Process
             $this->start();
         }
 
-        $this->getClient()->delete('/_all')->send();
+        $this->getClient()->delete('/_all');
     }
 
     private function pollWait()
@@ -112,9 +113,9 @@ class Server extends Process
         foreach (FibonacciFactory::sequence(50000, 10000) as $sleepTime) {
             try {
                 usleep($sleepTime);
-                $this->getClient()->head('/_me')->send();
+                $this->getClient()->head('/_me');
                 break;
-            } catch (CurlException $e) {
+            } catch (TransferException $e) {
                 continue;
             }
         }

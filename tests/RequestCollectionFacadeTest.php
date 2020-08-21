@@ -1,9 +1,10 @@
 <?php
 namespace InterNations\Component\HttpMock\Tests;
 
-use Guzzle\Http\ClientInterface;
-use Guzzle\Http\Message\Request;
-use Guzzle\Http\Message\Response;
+use GuzzleHttp\ClientInterface;
+use GuzzleHttp\Message\Request;
+use GuzzleHttp\Message\Response;
+use GuzzleHttp\Stream\Stream;
 use InterNations\Component\HttpMock\RequestCollectionFacade;
 use InterNations\Component\Testing\AbstractTestCase;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -22,10 +23,9 @@ class RequestCollectionFacadeTest extends AbstractTestCase
 
     public function setUp()
     {
-        $this->client = $this->createMock('Guzzle\Http\ClientInterface');
+        $this->client = $this->createMock('GuzzleHttp\ClientInterface');
         $this->facade = new RequestCollectionFacade($this->client);
         $this->request = new Request('GET', '/_request/last');
-        $this->request->setClient($this->client);
     }
 
     public static function provideMethodAndUrls()
@@ -119,13 +119,7 @@ class RequestCollectionFacadeTest extends AbstractTestCase
             ->expects($this->once())
             ->method($method)
             ->with($path)
-            ->will($this->returnValue($this->request));
-
-        $this->client
-            ->expects($this->once())
-            ->method('send')
-            ->with($this->request)
-            ->will($this->returnValue($response));
+            ->willReturn($response);
     }
 
     private function createSimpleResponse()
@@ -160,17 +154,19 @@ class RequestCollectionFacadeTest extends AbstractTestCase
         return new Response(
             '200',
             ['Content-Type' => 'text/plain; charset=UTF-8'],
-            serialize(
-                [
-                    'server' => [
-                        'HTTP_HOST'       => 'host',
-                        'HTTP_PORT'       => 1234,
-                        'PHP_AUTH_USER'   => 'username',
-                        'PHP_AUTH_PW'     => 'password',
-                        'HTTP_USER_AGENT' => 'CUSTOM UA',
-                    ],
-                    'request' => (string) $recordedRequest,
-                ]
+            Stream::factory(
+                serialize(
+                    [
+                        'server' => [
+                            'HTTP_HOST'       => 'host',
+                            'HTTP_PORT'       => 1234,
+                            'PHP_AUTH_USER'   => 'username',
+                            'PHP_AUTH_PW'     => 'password',
+                            'HTTP_USER_AGENT' => 'CUSTOM UA',
+                        ],
+                        'request' => (string) $recordedRequest,
+                    ]
+                )
             )
         );
     }
@@ -192,6 +188,6 @@ class RequestCollectionFacadeTest extends AbstractTestCase
 
     private function createResponseThatCannotBeDeserialized()
     {
-        return new Response(200, ['Content-Type' => 'text/plain'], 'invalid response');
+        return new Response(200, ['Content-Type' => 'text/plain'], Stream::factory('invalid response'));
     }
 }

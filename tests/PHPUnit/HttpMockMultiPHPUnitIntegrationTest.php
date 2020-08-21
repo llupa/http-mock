@@ -53,7 +53,7 @@ class HttpMockMultiPHPUnitIntegrationTest extends AbstractTestCase
             ->end();
         $this->http['firstNamedServer']->setUp();
 
-        $this->assertSame($path . ' body', (string) $this->http['firstNamedServer']->client->get($path)->send()->getBody());
+        $this->assertSame($path . ' body', (string) $this->http['firstNamedServer']->client->get($path)->getBody());
 
         $request = $this->http['firstNamedServer']->requests->latest();
         $this->assertSame('GET', $request->getMethod());
@@ -75,7 +75,7 @@ class HttpMockMultiPHPUnitIntegrationTest extends AbstractTestCase
         $this->assertSame('GET', $request->getMethod());
         $this->assertSame($path, $request->getPath());
 
-        $this->assertSame($path . ' body', (string) $this->http['firstNamedServer']->client->get($path)->send()->getBody());
+        $this->assertSame($path . ' body', (string) $this->http['firstNamedServer']->client->get($path)->getBody());
 
         $request = $this->http['firstNamedServer']->requests->shift();
         $this->assertSame('GET', $request->getMethod());
@@ -96,7 +96,7 @@ class HttpMockMultiPHPUnitIntegrationTest extends AbstractTestCase
             ->end();
         $this->http['firstNamedServer']->setUp();
 
-        $this->http['firstNamedServer']->client->get('/foo')->send();
+        $this->http['firstNamedServer']->client->get('/foo');
 
         // Should fail during tear down as we have an error_log() on the server side
         try {
@@ -109,8 +109,8 @@ class HttpMockMultiPHPUnitIntegrationTest extends AbstractTestCase
 
     public function testFailedRequest()
     {
-        $response = $this->http['firstNamedServer']->client->get('/foo')->send();
-        $this->assertSame(404, $response->getStatusCode());
+        $response = $this->http['firstNamedServer']->client->get('/foo');
+        $this->assertSame("404", $response->getStatusCode());
         $this->assertSame('No matching expectation found', (string) $response->getBody());
     }
 
@@ -122,8 +122,8 @@ class HttpMockMultiPHPUnitIntegrationTest extends AbstractTestCase
     /** @depends testStopServer */
     public function testHttpServerIsRestartedIfATestStopsIt()
     {
-        $response = $this->http['firstNamedServer']->client->get('/')->send();
-        $this->assertSame(404, $response->getStatusCode());
+        $response = $this->http['firstNamedServer']->client->get('/');
+        $this->assertSame("404", $response->getStatusCode());
     }
 
     public function testLimitDurationOfAResponse()
@@ -136,9 +136,9 @@ class HttpMockMultiPHPUnitIntegrationTest extends AbstractTestCase
                 ->body('POST METHOD')
             ->end();
         $this->http['firstNamedServer']->setUp();
-        $firstResponse = $this->http['firstNamedServer']->client->post('/')->send();
+        $firstResponse = $this->http['firstNamedServer']->client->post('/');
         $this->assertSame(200, $firstResponse->getStatusCode());
-        $secondResponse = $this->http['firstNamedServer']->client->post('/')->send();
+        $secondResponse = $this->http['firstNamedServer']->client->post('/');
         $this->assertSame(410, $secondResponse->getStatusCode());
         $this->assertSame('Expectation no longer applicable', $secondResponse->getBody(true));
 
@@ -150,11 +150,11 @@ class HttpMockMultiPHPUnitIntegrationTest extends AbstractTestCase
                 ->body('POST METHOD')
             ->end();
         $this->http['firstNamedServer']->setUp();
-        $firstResponse = $this->http['firstNamedServer']->client->post('/')->send();
+        $firstResponse = $this->http['firstNamedServer']->client->post('/');
         $this->assertSame(200, $firstResponse->getStatusCode());
-        $secondResponse = $this->http['firstNamedServer']->client->post('/')->send();
+        $secondResponse = $this->http['firstNamedServer']->client->post('/');
         $this->assertSame(200, $secondResponse->getStatusCode());
-        $thirdResponse = $this->http['firstNamedServer']->client->post('/')->send();
+        $thirdResponse = $this->http['firstNamedServer']->client->post('/');
         $this->assertSame(410, $thirdResponse->getStatusCode());
         $this->assertSame('Expectation no longer applicable', $thirdResponse->getBody(true));
 
@@ -166,11 +166,11 @@ class HttpMockMultiPHPUnitIntegrationTest extends AbstractTestCase
                 ->body('POST METHOD')
             ->end();
         $this->http['firstNamedServer']->setUp();
-        $firstResponse = $this->http['firstNamedServer']->client->post('/')->send();
+        $firstResponse = $this->http['firstNamedServer']->client->post('/');
         $this->assertSame(200, $firstResponse->getStatusCode());
-        $secondResponse = $this->http['firstNamedServer']->client->post('/')->send();
+        $secondResponse = $this->http['firstNamedServer']->client->post('/');
         $this->assertSame(200, $secondResponse->getStatusCode());
-        $thirdResponse = $this->http['firstNamedServer']->client->post('/')->send();
+        $thirdResponse = $this->http['firstNamedServer']->client->post('/');
         $this->assertSame(200, $thirdResponse->getStatusCode());
     }
 
@@ -183,7 +183,7 @@ class HttpMockMultiPHPUnitIntegrationTest extends AbstractTestCase
                 ->callback(static function(Response $response) {$response->setContent('CALLBACK');})
             ->end();
         $this->http['firstNamedServer']->setUp();
-        $this->assertSame('CALLBACK', $this->http['firstNamedServer']->client->post('/')->send()->getBody(true));
+        $this->assertSame('CALLBACK', $this->http['firstNamedServer']->client->post('/')->getBody(true));
     }
 
     public function testComplexResponse()
@@ -198,7 +198,7 @@ class HttpMockMultiPHPUnitIntegrationTest extends AbstractTestCase
             ->end();
         $this->http['firstNamedServer']->setUp();
         $response = $this->http['firstNamedServer']->client
-            ->post('/', ['x-client-header' => 'header-value'], ['post-key' => 'post-value'])->send();
+            ->post('/', ['x-client-header' => 'header-value'], ['post-key' => 'post-value']);
         $this->assertSame('BODY', $response->getBody(true));
         $this->assertSame(201, $response->getStatusCode());
         $this->assertSame('Bar', (string) $response->getHeader('X-Foo'));
@@ -217,7 +217,7 @@ class HttpMockMultiPHPUnitIntegrationTest extends AbstractTestCase
             ->end();
         $this->http['firstNamedServer']->setUp();
         $response = $this->http['firstNamedServer']->client
-            ->put('/', ['x-client-header' => 'header-value'], ['put-key' => 'put-value'])->send();
+            ->put('/', ['x-client-header' => 'header-value'], ['put-key' => 'put-value']);
         $this->assertSame('BODY', $response->getBody(true));
         $this->assertSame(201, $response->getStatusCode());
         $this->assertSame('Bar', (string) $response->getHeader('X-Foo'));
@@ -236,7 +236,7 @@ class HttpMockMultiPHPUnitIntegrationTest extends AbstractTestCase
             ->end();
         $this->http['firstNamedServer']->setUp();
         $response = $this->http['firstNamedServer']->client
-            ->post('/', ['x-client-header' => 'header-value'], ['post-key' => 'post-value'])->send();
+            ->post('/', ['x-client-header' => 'header-value'], ['post-key' => 'post-value']);
         $this->assertSame('BODY', $response->getBody(true));
         $this->assertSame(201, $response->getStatusCode());
         $this->assertSame('Bar', (string) $response->getHeader('X-Foo'));

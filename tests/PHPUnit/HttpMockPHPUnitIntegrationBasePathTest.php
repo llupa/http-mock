@@ -39,7 +39,7 @@ class HttpMockPHPUnitIntegrationBasePathTest extends AbstractTestCase
             ->end();
         $this->http->setUp();
 
-        $this->assertSame('/foo body', (string) $this->http->client->get('/custom-base-path/foo')->send()->getBody());
+        $this->assertSame('/foo body', (string) $this->http->client->get('/custom-base-path/foo')->getBody());
 
         $request = $this->http->requests->latest();
         $this->assertSame('GET', $request->getMethod());

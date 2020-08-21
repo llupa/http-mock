@@ -1,7 +1,7 @@
 <?php
 namespace InterNations\Component\HttpMock\PHPUnit;
 
-use Guzzle\Http\Client;
+use GuzzleHttp\Client;
 use InterNations\Component\HttpMock\Matcher\ExtractorFactory;
 use InterNations\Component\HttpMock\Matcher\MatcherFactory;
 use InterNations\Component\HttpMock\MockBuilder;
