@@ -59,13 +59,15 @@ class RequestCollectionFacadeTest extends AbstractTestCase
 
         $request = call_user_func_array([$this->facade, $method], $args);
 
+        $auth = base64_decode(explode(' ', $request->getHeader('Authorization'))[1]);
+
         $this->assertSame('POST', $request->getMethod());
         $this->assertSame('/foo', $request->getPath());
         $this->assertSame('RECORDED=1', (string) $request->getBody());
         $this->assertSame('host', $request->getHost());
         $this->assertSame(1234, $request->getPort());
-        $this->assertSame('username', $request->getUsername());
-        $this->assertSame('password', $request->getPassword());
+        $this->assertContains('username', $auth);
+        $this->assertContains('password', $auth);
         $this->assertSame('CUSTOM UA', $request->getUserAgent());
     }
 
@@ -132,12 +134,12 @@ class RequestCollectionFacadeTest extends AbstractTestCase
         return new Response(
             '200',
             ['Content-Type' => 'text/plain'],
-            serialize(
+            Stream::factory(serialize(
                 [
                     'server' => [],
                     'request' => (string) $recordedRequest,
                 ]
-            )
+            ))
         );
     }
 

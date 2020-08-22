@@ -84,16 +84,16 @@ class MockBuilderIntegrationTest extends TestCase
 
         $expectation->getResponse()->setDate(new DateTime('2012-11-10 09:08:07', new DateTimeZone('UTC')));
         $response = "HTTP/1.0 401 Unauthorized\r\nCache-Control: no-cache, private\r\nDate:          Sat, 10 Nov 2012 09:08:07 GMT\r\nX-Foo:         Bar\r\n\r\nresponse body";
-        $this->assertSame($response, (string)$expectation->getResponse());
+        $this->assertSame($response, (string) $expectation->getResponse());
 
 
         $this->server->setUp($expectations);
 
         $client = $this->server->getClient();
 
-        $this->assertSame('response body', (string) $client->post('/foo')->send()->getBody());
+        $this->assertSame('response body', (string) $client->post('/foo')->getBody());
 
-        $this->assertContains('CLOSURE MATCHER: POST /foo', $this->server->getErrorOutput());
+        $this->assertContains('CLOSURE MATCHER: POST /foo', $this->server);
     }
 
     public function testCreateTwoExpectationsAfterEachOther()
@@ -118,9 +118,9 @@ class MockBuilderIntegrationTest extends TestCase
             ->end();
         $this->server->setUp($this->builder->flushExpectations());
 
-        $this->assertSame('POST 1', (string) $this->server->getClient()->post('/post-resource-1')->send()->getBody());
-        $this->assertSame('POST 2', (string) $this->server->getClient()->post('/post-resource-2')->send()->getBody());
-        $this->assertSame('POST 1', (string) $this->server->getClient()->post('/post-resource-1')->send()->getBody());
-        $this->assertSame('POST 2', (string) $this->server->getClient()->post('/post-resource-2')->send()->getBody());
+        $this->assertSame('POST 1', (string) $this->server->getClient()->post('/post-resource-1')->getBody());
+        $this->assertSame('POST 2', (string) $this->server->getClient()->post('/post-resource-2')->getBody());
+        $this->assertSame('POST 1', (string) $this->server->getClient()->post('/post-resource-1')->getBody());
+        $this->assertSame('POST 2', (string) $this->server->getClient()->post('/post-resource-2')->getBody());
     }
 }

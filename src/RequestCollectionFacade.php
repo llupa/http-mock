@@ -85,10 +85,10 @@ class RequestCollectionFacade implements Countable
     private function parseRequestFromResponse(ResponseInterface $response, $path)
     {
         try {
-            $requestInfo = Util::deserialize($response->getBody());
+            $requestInfo = Util::deserialize((string) $response->getBody());
         } catch (UnexpectedValueException $e) {
             throw new UnexpectedValueException(
-                sprintf('Cannot deserialize response from "%s": "%s"', $path, $response->getBody()->getContents()),
+                sprintf('Cannot deserialize response from "%s": "%s"', $path, (string) $response->getBody()),
                 null,
                 $e
             );
@@ -133,6 +133,7 @@ class RequestCollectionFacade implements Countable
             $body = $request->getBody();
 
             if ($body instanceof PostBodyInterface) {
+                dump('yes');
                 $request->getBody()->replaceFields($enclosure);
             }
         }

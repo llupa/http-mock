@@ -1,11 +1,12 @@
 <?php
 namespace InterNations\Component\HttpMock\Tests;
 
+use GuzzleHttp\Message\RequestInterface;
 use InterNations\Component\HttpMock\Server;
 use InterNations\Component\Testing\AbstractTestCase;
 use GuzzleHttp\Client;
 use GuzzleHttp\Message\MessageFactory;
-use GuzzleHttp\Message\Response as GuzzleResponse;
+use GuzzleHttp\Message\ResponseInterface as GuzzleResponse;
 use SuperClosure\SerializableClosure;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -59,16 +60,16 @@ class AppIntegrationTest extends AbstractTestCase
             )
         );
         $this->assertSame('', (string) $response->getBody());
-        $this->assertSame(201, $response->getStatusCode());
+        $this->assertSame("201", $response->getStatusCode());
 
-        $response = $this->client->post('/foobar', ['post' => 'data', 'headers' => ['X-Special' => 1]]);
+        $response = $this->client->post('/foobar', ['body' => [ 'post' => 'data'], 'headers' => ['X-Special' => 1]]);
 
-        $this->assertSame(200, $response->getStatusCode());
-        $this->assertSame('fake body', (string) $response->getBody());
+        $this->assertSame("200", $response->getStatusCode());
+        $this->assertSame('fake body', $response->getBody()->getContents());
 
         $response = $this->client->get('/_request/latest');
 
-        /** @var Request $request */
+        /** @var RequestInterface $request */
         $request = $this->parseRequestFromResponse($response);
         $this->assertSame('1', $request->getHeader('X-Special'));
         $this->assertSame('post=data', (string) $request->getBody());
@@ -133,35 +134,40 @@ class AppIntegrationTest extends AbstractTestCase
     {
         $this->client->delete('/_all');
 
-        $response = $this->client->post('/_expectation', ['matcher' => '']);
-        $this->assertSame(417, $response->getStatusCode());
+        $response = $this->client->post('/_expectation', ['body' => ['matcher' => '']]);
+        $this->assertSame("417", $response->getStatusCode());
         $this->assertSame('POST data key "matcher" must be a serialized list of closures', (string) $response->getBody());
 
-        $response = $this->client->post('/_expectation', ['matcher' => ['foo']]);
-        $this->assertSame(417, $response->getStatusCode());
+        $response = $this->client->post('/_expectation', ['body' => ['matcher' => '']]);
+        $this->assertSame("417", $response->getStatusCode());
         $this->assertSame('POST data key "matcher" must be a serialized list of closures', (string) $response->getBody());
 
         $response = $this->client->post('/_expectation');
-        $this->assertSame(417, $response->getStatusCode());
+        $this->assertSame("417", $response->getStatusCode());
         $this->assertSame('POST data key "response" not found in POST data', (string) $response->getBody());
 
-        $response = $this->client->post('/_expectation', ['response' => '']);
-        $this->assertSame(417, $response->getStatusCode());
+        $response = $this->client->post('/_expectation', ['body' => ['response' => '']]);
+        $this->assertSame("417", $response->getStatusCode());
         $this->assertSame('POST data key "response" must be a serialized Symfony response', (string) $response->getBody());
 
-        $response = $this->client->post('/_expectation', ['response' => serialize(new Response()), 'limiter' => 'foo']);
-        $this->assertSame(417, $response->getStatusCode());
+        $response = $this->client->post('/_expectation', ['body' => ['response' => serialize(new Response()), 'limiter' => 'foo']]);
+        $this->assertSame("417", $response->getStatusCode());
         $this->assertSame('POST data key "limiter" must be a serialized closure', (string) $response->getBody());
     }
 
     public function testServerParamsAreRecorded()
     {
         $this->client
-            ->setUserAgent('CUSTOM UA')
-            ->get('/foo')
-            ->setAuth('username', 'password')
-            ->setProtocolVersion('1.0')
-            ;
+            ->get(
+                '/foo',
+                [
+                    'headers' => [
+                        'User-Agent' => 'CUSTOM UA',
+                        'Authorization' => 'Basic '.base64_encode(sprintf('%s:%s', 'username', 'password')),
+                    ],
+                    'version' => '1.0'
+                ]
+            );
 
         $latestRequest = unserialize($this->client->get('/_request/latest')->getBody()->getContents());
 
@@ -186,7 +192,7 @@ class AppIntegrationTest extends AbstractTestCase
                 new Response('first', 200)
             )
         );
-        $this->assertSame('first', $this->client->get('/')->getBody(true));
+        $this->assertSame('first', (string) $this->client->get('/')->getBody());
 
         $this->client->post(
             '/_expectation',
@@ -199,14 +205,14 @@ class AppIntegrationTest extends AbstractTestCase
                 new Response('second', 200)
             )
         );
-        $this->assertSame('second', $this->client->get('/')->getBody(true));
+        $this->assertSame('second', (string) $this->client->get('/')->getBody());
     }
 
     public function testServerLogsAreNotInErrorOutput()
     {
         $this->client->delete('/_all');
 
-        $expectedServerErrorOutput = "[404]: (null) / - No such file or directory\n";
+        $expectedServerErrorOutput = "[404]: (null) / - No such file or directory";
 
         self::$server1->addErrorOutput('PHP 7.4.2 Development Server (http://localhost:8086) started' . PHP_EOL);
         self::$server1->addErrorOutput('Accepted' . PHP_EOL);
@@ -215,7 +221,7 @@ class AppIntegrationTest extends AbstractTestCase
 
         $actualServerErrorOutput = self::$server1->getErrorOutput();
 
-        $this->assertEquals($expectedServerErrorOutput, $actualServerErrorOutput);
+        $this->assertContains($expectedServerErrorOutput, $actualServerErrorOutput);
 
         self::$server1->clearErrorOutput();
     }
@@ -234,8 +240,10 @@ class AppIntegrationTest extends AbstractTestCase
         }
 
         return [
-            'matcher'  => serialize($closures),
-            'response' => serialize($response),
+            'body' => [
+                'matcher'  => serialize($closures),
+                'response' => serialize($response),
+            ]
         ];
     }
 }
