@@ -3,7 +3,6 @@ namespace InterNations\Component\HttpMock;
 
 use GuzzleHttp\Client;
 use GuzzleHttp\Event\ErrorEvent;
-use GuzzleHttp\Message\ResponseInterface;
 use hmmmath\Fibonacci\FibonacciFactory;
 use Symfony\Component\Process\Process;
 use RuntimeException;
@@ -54,9 +53,7 @@ class Server extends Process
 
     private function createClient()
     {
-        $client = new Client([
-            'base_url' => $this->getBaseUrl()
-        ]);
+        $client = new Client(['base_url' => $this->getBaseUrl()]);
         $client->getEmitter()->on(
             'error',
             static function (ErrorEvent $errorEvent) {
@@ -96,7 +93,7 @@ class Server extends Process
                 ]
             );
 
-            if ($response->getStatusCode() !== "201") {
+            if ($response->getStatusCode() !== '201') {
                 throw new RuntimeException('Could not set up expectations');
             }
         }

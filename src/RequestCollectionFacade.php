@@ -117,10 +117,7 @@ class RequestCollectionFacade implements Countable
         if (isset($server['PHP_AUTH_USER'])) {
             $username = $server['PHP_AUTH_USER'];
             $password = isset($server['PHP_AUTH_PW']) ? $server['PHP_AUTH_PW'] : null;
-            $request->setHeader(
-                'Authorization',
-                'Basic ' . base64_encode($username.':'.$password)
-            );
+            $request->setHeader('Authorization', 'Basic ' . base64_encode($username . ':' . $password));
         }
 
         $params = [];
@@ -159,7 +156,7 @@ class RequestCollectionFacade implements Countable
     {
         $statusCode = $response->getStatusCode();
 
-        if ($statusCode !== "200") {
+        if ($statusCode !== '200') {
             throw new UnexpectedValueException(
                 sprintf('Expected status code 200 from "%s", got %d', $path, $statusCode)
             );

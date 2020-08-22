@@ -91,8 +91,8 @@ class UnifiedRequest
      * comma, this method provides a Boolean argument that can be used to
      * retrieve the associated header values as an array of strings.
      *
-     * @param string $header  Case-insensitive header name.
-     * @param bool   $asArray Set to true to retrieve the header value as an
+     * @param string  $header  Case-insensitive header name.
+     * @param boolean $asArray Set to true to retrieve the header value as an
      *                        array of strings.
      *
      * @return array|string
@@ -107,7 +107,7 @@ class UnifiedRequest
      *
      * @param string $header Case-insensitive header name.
      *
-     * @return bool Returns true if any header names match the given header
+     * @return boolean Returns true if any header names match the given header
      *     name using a case-insensitive string comparison. Returns false if
      *     no matching header name is found in the message.
      */
@@ -171,7 +171,7 @@ class UnifiedRequest
     /**
      * Get the port scheme of the request (e.g., 80, 443, etc.).
      *
-     * @return int
+     * @return integer
      */
     public function getPort()
     {
